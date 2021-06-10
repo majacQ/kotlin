@@ -1049,8 +1049,9 @@ open class RawFirBuilder(
             }
 
             val target = FirFunctionTarget(labelName, isLambda = false)
-            return functionBuilder.apply {
-                source = function.toFirSourceElement()
+            val functionSource = function.toFirSourceElement()
+            val firFunction = functionBuilder.apply {
+                source = functionSource
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 returnTypeRef = returnType
@@ -1086,6 +1087,14 @@ open class RawFirBuilder(
                     function.fillDanglingConstraintsTo(it)
                 }
             }
+            return if (firFunction is FirAnonymousFunction) {
+                buildAnonymousFunctionExpression {
+                    source = functionSource
+                    anonymousFunction = firFunction
+                }
+            } else {
+                firFunction
+            }
         }
 
         private fun KtDeclarationWithBody.obtainContractDescription(): FirContractDescription? {
@@ -1115,7 +1124,7 @@ open class RawFirBuilder(
             }
 
             val target: FirFunctionTarget
-            return buildAnonymousFunction {
+            val anonymousFunction = buildAnonymousFunction {
                 source = literalSource
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
@@ -1190,6 +1199,10 @@ open class RawFirBuilder(
                 context.firFunctionTargets.removeLast()
             }.also {
                 bindFunctionTarget(target, it)
+            }
+            return buildAnonymousFunctionExpression {
+                source = expression.toFirPsiSourceElement()
+                this.anonymousFunction = anonymousFunction
             }
         }
 
