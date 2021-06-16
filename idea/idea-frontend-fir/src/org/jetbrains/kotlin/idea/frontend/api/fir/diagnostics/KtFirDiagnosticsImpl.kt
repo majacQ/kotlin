@@ -2831,6 +2831,14 @@ internal class RecursiveTypealiasExpansionImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class TypealiasShouldExpandToClassImpl(
+    override val expandedType: KtType,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.TypealiasShouldExpandToClass(), KtAbstractFirDiagnostic<KtTypeAlias> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
 internal class RedundantVisibilityModifierImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
