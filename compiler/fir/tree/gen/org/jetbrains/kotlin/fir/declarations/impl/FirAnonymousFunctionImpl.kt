@@ -50,11 +50,11 @@ internal class FirAnonymousFunctionImpl(
     override var invocationKind: EventOccurrencesRange?,
     override var inlineStatus: InlineStatus,
     override val isLambda: Boolean,
+    override val typeParameters: MutableList<FirTypeParameter>,
     override var typeRef: FirTypeRef,
 ) : FirAnonymousFunction() {
     override var resolvePhase: FirResolvePhase = FirResolvePhase.DECLARATIONS
     override var status: FirDeclarationStatus = FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS
-    override val typeParameters: List<FirTypeParameter> get() = emptyList()
 
     init {
         symbol.bind(this)
@@ -69,6 +69,7 @@ internal class FirAnonymousFunctionImpl(
         valueParameters.forEach { it.accept(visitor, data) }
         body?.accept(visitor, data)
         label?.accept(visitor, data)
+        typeParameters.forEach { it.accept(visitor, data) }
         typeRef.accept(visitor, data)
     }
 
@@ -81,6 +82,7 @@ internal class FirAnonymousFunctionImpl(
         transformValueParameters(transformer, data)
         transformBody(transformer, data)
         label = label?.transform(transformer, data)
+        transformTypeParameters(transformer, data)
         typeRef = typeRef.transform(transformer, data)
         return this
     }
@@ -116,6 +118,7 @@ internal class FirAnonymousFunctionImpl(
     }
 
     override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
+        typeParameters.transformInplace(transformer, data)
         return this
     }
 

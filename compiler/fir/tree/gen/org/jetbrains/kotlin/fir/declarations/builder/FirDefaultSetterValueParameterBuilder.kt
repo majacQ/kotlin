@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultSetterValueParameter
+import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
@@ -43,8 +44,6 @@ class FirDefaultSetterValueParameterBuilder : FirAnnotationContainerBuilder {
     var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     lateinit var returnTypeRef: FirTypeRef
     var receiverTypeRef: FirTypeRef? = null
-    val typeParameters: MutableList<FirTypeParameterRef> = mutableListOf()
-    lateinit var status: FirDeclarationStatus
     var containerSource: DeserializedContainerSource? = null
     var dispatchReceiverType: ConeKotlinType? = null
     lateinit var symbol: FirVariableSymbol<FirValueParameter>
@@ -70,8 +69,6 @@ class FirDefaultSetterValueParameterBuilder : FirAnnotationContainerBuilder {
             attributes,
             returnTypeRef,
             receiverTypeRef,
-            typeParameters,
-            status,
             containerSource,
             dispatchReceiverType,
             symbol,

@@ -481,6 +481,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         val implementationsWithoutStatusAndTypeParameters = listOf(
             "FirAnonymousFunctionImpl",
             "FirValueParameterImpl",
+            "FirDefaultSetterValueParameter",
             "FirErrorPropertyImpl",
             "FirErrorFunctionImpl"
         )
@@ -495,7 +496,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         configureFieldInAllImplementations(
             "typeParameters",
-            implementationPredicate = { it.type in implementationsWithoutStatusAndTypeParameters }
+            implementationPredicate = { it.type != "FirAnonymousFunctionImpl" && it.type in implementationsWithoutStatusAndTypeParameters }
         ) {
             defaultEmptyList(it)
             useTypes(resolvedDeclarationStatusImplType)
