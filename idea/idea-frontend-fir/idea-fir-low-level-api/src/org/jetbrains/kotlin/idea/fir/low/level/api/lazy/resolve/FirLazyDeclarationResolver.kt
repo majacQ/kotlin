@@ -81,7 +81,7 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
         ).transformDeclaration(firFileBuilder.firPhaseRunner)
     }
 
-    private fun FirDeclaration.isValidForResolve(): Boolean = when (origin) {
+    private fun FirDeclaration<*>.isValidForResolve(): Boolean = when (origin) {
         is FirDeclarationOrigin.Source,
         is FirDeclarationOrigin.ImportedFromObject,
         is FirDeclarationOrigin.Delegated,
@@ -187,7 +187,7 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
      * @param firDeclarationToResolve target non-local declaration
      */
     fun lazyResolveDeclaration(
-        firDeclarationToResolve: FirDeclaration,
+        firDeclarationToResolve: FirDeclaration<*>,
         moduleFileCache: ModuleFileCache,
         scopeSession: ScopeSession,
         toPhase: FirResolvePhase,

@@ -59,7 +59,7 @@ abstract class AbstractPartialRawFirBuilderTestCase : KtParsingTestCase(
     }
 
     private class DesignationBuilder(private val elementToBuild: KtDeclaration) : FirVisitorVoid() {
-        private val path = mutableListOf<FirDeclaration>()
+        private val path = mutableListOf<FirDeclaration<*>>()
         var resultDesignation: FirDeclarationDesignation? = null
             private set
 
@@ -68,7 +68,7 @@ abstract class AbstractPartialRawFirBuilderTestCase : KtParsingTestCase(
             when (element) {
                 is FirSimpleFunction, is FirProperty -> {
                     if (element.psi == elementToBuild) {
-                        val originalDeclaration = element as FirDeclaration
+                        val originalDeclaration = element as FirDeclaration<*>
                         resultDesignation = FirDeclarationDesignation(path, originalDeclaration)
                     } else {
                         element.acceptChildren(this)

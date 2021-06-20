@@ -6,15 +6,14 @@
 package org.jetbrains.kotlin.idea.fir.low.level.api.transformers
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignation
 
 internal interface FirLazyTransformerForIDE {
     fun transformDeclaration(phaseRunner: FirPhaseRunner)
-    fun ensureResolved(declaration: FirDeclaration)
-    fun ensureResolvedDeep(declaration: FirDeclaration) {
+    fun ensureResolved(declaration: FirDeclaration<*>)
+    fun ensureResolvedDeep(declaration: FirDeclaration<*>) {
         if (!enableDeepEnsure) return
         ensureResolved(declaration)
         if (declaration is FirRegularClass) {
@@ -28,19 +27,19 @@ internal interface FirLazyTransformerForIDE {
 
         private object ResolvePhaseWithForAllDeclarationsKey : FirDeclarationDataKey()
 
-        private var FirDeclaration.resolvePhaseForDeclarationAndChildrenAttr: FirResolvePhase?
+        private var FirDeclaration<*>.resolvePhaseForDeclarationAndChildrenAttr: FirResolvePhase?
                 by FirDeclarationDataRegistry.data(ResolvePhaseWithForAllDeclarationsKey)
 
         /**
          * This resolve phase is used to check if current declaration and it's children were resolved for phase
          */
-        var FirDeclaration.resolvePhaseForDeclarationAndChildren: FirResolvePhase
+        var FirDeclaration<*>.resolvePhaseForDeclarationAndChildren: FirResolvePhase
             get() = resolvePhaseForDeclarationAndChildrenAttr ?: FirResolvePhase.RAW_FIR
             set(value) {
                 resolvePhaseForDeclarationAndChildrenAttr = value
             }
 
-        fun FirDeclaration.updateResolvedPhaseForDeclarationAndChildren(phase: FirResolvePhase) {
+        fun FirDeclaration<*>.updateResolvedPhaseForDeclarationAndChildren(phase: FirResolvePhase) {
             val allDeclaration = resolvePhaseForDeclarationAndChildren
             if (allDeclaration < phase) {
                 resolvePhaseForDeclarationAndChildren = phase
@@ -68,7 +67,7 @@ internal interface FirLazyTransformerForIDE {
 
         val DUMMY = object : FirLazyTransformerForIDE {
             override fun transformDeclaration(phaseRunner: FirPhaseRunner) = Unit
-            override fun ensureResolved(declaration: FirDeclaration) = error("Not implemented")
+            override fun ensureResolved(declaration: FirDeclaration<*>) = error("Not implemented")
         }
     }
 }
