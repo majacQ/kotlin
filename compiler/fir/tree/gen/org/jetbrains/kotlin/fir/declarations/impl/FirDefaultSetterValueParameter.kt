@@ -9,16 +9,20 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.symbols.impl.FirDelegateFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
 
 /*
@@ -34,6 +38,10 @@ internal class FirDefaultSetterValueParameter(
     override val attributes: FirDeclarationAttributes,
     override var returnTypeRef: FirTypeRef,
     override var receiverTypeRef: FirTypeRef?,
+    override val typeParameters: MutableList<FirTypeParameterRef>,
+    override var status: FirDeclarationStatus,
+    override val containerSource: DeserializedContainerSource?,
+    override val dispatchReceiverType: ConeKotlinType?,
     override val symbol: FirVariableSymbol<FirValueParameter>,
     override var initializer: FirExpression?,
     override var delegate: FirExpression?,
@@ -59,6 +67,8 @@ internal class FirDefaultSetterValueParameter(
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         returnTypeRef.accept(visitor, data)
         receiverTypeRef?.accept(visitor, data)
+        typeParameters.forEach { it.accept(visitor, data) }
+        status.accept(visitor, data)
         initializer?.accept(visitor, data)
         delegate?.accept(visitor, data)
         getter?.accept(visitor, data)
@@ -71,6 +81,8 @@ internal class FirDefaultSetterValueParameter(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirDefaultSetterValueParameter {
         transformReturnTypeRef(transformer, data)
         transformReceiverTypeRef(transformer, data)
+        transformTypeParameters(transformer, data)
+        transformStatus(transformer, data)
         transformInitializer(transformer, data)
         transformDelegate(transformer, data)
         transformGetter(transformer, data)
@@ -86,6 +98,16 @@ internal class FirDefaultSetterValueParameter(
 
     override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirDefaultSetterValueParameter {
         receiverTypeRef = receiverTypeRef?.transform(transformer, data)
+        return this
+    }
+
+    override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirDefaultSetterValueParameter {
+        typeParameters.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirDefaultSetterValueParameter {
+        status = status.transform(transformer, data)
         return this
     }
 

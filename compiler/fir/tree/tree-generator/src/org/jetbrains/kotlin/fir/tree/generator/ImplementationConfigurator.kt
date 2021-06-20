@@ -477,6 +477,29 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(file) {
             default("symbol", "FirFileSymbol()")
         }
+
+        val implementationsWithoutStatusAndTypeParameters = listOf(
+            "FirAnonymousFunctionImpl",
+            "FirValueParameterImpl",
+            "FirErrorPropertyImpl",
+            "FirErrorFunctionImpl"
+        )
+
+        configureFieldInAllImplementations(
+            "status",
+            implementationPredicate = { it.type in implementationsWithoutStatusAndTypeParameters }
+        ) {
+            default(it, "FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS")
+            useTypes(resolvedDeclarationStatusImplType)
+        }
+
+        configureFieldInAllImplementations(
+            "typeParameters",
+            implementationPredicate = { it.type in implementationsWithoutStatusAndTypeParameters }
+        ) {
+            defaultEmptyList(it)
+            useTypes(resolvedDeclarationStatusImplType)
+        }
     }
 
     private fun configureAllImplementations() {

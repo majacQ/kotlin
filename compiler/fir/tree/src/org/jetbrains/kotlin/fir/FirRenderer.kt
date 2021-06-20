@@ -193,6 +193,10 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         print(")")
     }
 
+    fun renderAnnotations(annotationContainer: FirAnnotationContainer) {
+        annotationContainer.annotations.renderAnnotations()
+    }
+
     private fun List<FirAnnotationCall>.renderAnnotations() {
         if (!mode.renderAnnotation) return
         for (annotation in this) {
@@ -210,10 +214,10 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
     }
 
     override fun <F : FirCallableDeclaration<F>> visitCallableDeclaration(callableDeclaration: FirCallableDeclaration<F>) {
-        if (callableDeclaration is FirMemberDeclaration<*>) {
-            visitMemberDeclaration(callableDeclaration)
+        callableDeclaration.annotations.renderAnnotations()
+        if (callableDeclaration is FirStatusOwner) {
+            visitStatusOwner(callableDeclaration)
         } else {
-            callableDeclaration.annotations.renderAnnotations()
             visitTypedDeclaration(callableDeclaration)
         }
         val receiverType = callableDeclaration.receiverTypeRef
@@ -267,7 +271,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         return itself + "[${effectiveVisibility.name}]"
     }
 
-    private fun FirMemberDeclaration<*>.modalityAsString(): String {
+    private fun FirStatusOwner.modalityAsString(): String {
         return modality?.name?.toLowerCaseAsciiOnly() ?: run {
             if (this is FirCallableMemberDeclaration<*> && this.isOverride) {
                 "open?"
@@ -297,85 +301,84 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         typeParameterRef.symbol.fir.accept(this)
     }
 
-    override fun <E : FirMemberDeclaration<E>> visitMemberDeclaration(memberDeclaration: FirMemberDeclaration<E>) {
-        memberDeclaration.annotations.renderAnnotations()
-        if (memberDeclaration !is FirProperty || !memberDeclaration.isLocal) {
+    override fun visitStatusOwner(statusOwner: FirStatusOwner) {
+        if (statusOwner !is FirProperty || !statusOwner.isLocal) {
             // we can't access session.effectiveVisibilityResolver from here!
             // print(memberDeclaration.visibility.asString(memberDeclaration.getEffectiveVisibility(...)) + " ")
-            print(memberDeclaration.visibility.asString() + " ")
-            print(memberDeclaration.modalityAsString() + " ")
+            print(statusOwner.visibility.asString() + " ")
+            print(statusOwner.modalityAsString() + " ")
         }
-        if (memberDeclaration.isExpect) {
+        if (statusOwner.isExpect) {
             print("expect ")
         }
-        if (memberDeclaration.isActual) {
+        if (statusOwner.isActual) {
             print("actual ")
         }
-        if (memberDeclaration.isExternal) {
+        if (statusOwner.isExternal) {
             print("external ")
         }
-        if (memberDeclaration is FirCallableMemberDeclaration<*>) {
-            if (memberDeclaration.isOverride) {
+        if (statusOwner is FirCallableMemberDeclaration<*>) {
+            if (statusOwner.isOverride) {
                 print("override ")
             }
-            if (memberDeclaration.isStatic) {
+            if (statusOwner.isStatic) {
                 print("static ")
             }
         }
-        if (memberDeclaration is FirRegularClass) {
-            if (memberDeclaration.isInner) {
+        if (statusOwner is FirRegularClass) {
+            if (statusOwner.isInner) {
                 print("inner ")
             }
-            if (memberDeclaration.isCompanion) {
+            if (statusOwner.isCompanion) {
                 print("companion ")
             }
-            if (memberDeclaration.isData) {
+            if (statusOwner.isData) {
                 print("data ")
             }
-            if (memberDeclaration.isInline) {
+            if (statusOwner.isInline) {
                 print("inline ")
             }
-        } else if (memberDeclaration is FirSimpleFunction) {
-            if (memberDeclaration.isOperator) {
+        } else if (statusOwner is FirSimpleFunction) {
+            if (statusOwner.isOperator) {
                 print("operator ")
             }
-            if (memberDeclaration.isInfix) {
+            if (statusOwner.isInfix) {
                 print("infix ")
             }
-            if (memberDeclaration.isInline) {
+            if (statusOwner.isInline) {
                 print("inline ")
             }
-            if (memberDeclaration.isTailRec) {
+            if (statusOwner.isTailRec) {
                 print("tailrec ")
             }
-            if (memberDeclaration.isSuspend) {
+            if (statusOwner.isSuspend) {
                 print("suspend ")
             }
-        } else if (memberDeclaration is FirProperty) {
-            if (memberDeclaration.isConst) {
+        } else if (statusOwner is FirProperty) {
+            if (statusOwner.isConst) {
                 print("const ")
             }
-            if (memberDeclaration.isLateInit) {
+            if (statusOwner.isLateInit) {
                 print("lateinit ")
             }
         }
 
-        visitDeclaration(memberDeclaration)
-        when (memberDeclaration) {
+        visitDeclaration(statusOwner as FirDeclaration<*>)
+        when (statusOwner) {
             is FirClassLikeDeclaration<*> -> {
-                if (memberDeclaration is FirRegularClass) {
-                    print(" " + memberDeclaration.name)
+                if (statusOwner is FirRegularClass) {
+                    print(" " + statusOwner.name)
                 }
-                if (memberDeclaration is FirTypeAlias) {
-                    print(" " + memberDeclaration.name)
+                if (statusOwner is FirTypeAlias) {
+                    print(" " + statusOwner.name)
                 }
-                memberDeclaration.typeParameters.renderTypeParameters()
+                statusOwner.typeParameters.renderTypeParameters()
             }
             is FirCallableDeclaration<*> -> {
                 // Name is handled by visitCallableDeclaration
-                if (memberDeclaration.typeParameters.isNotEmpty()) {
+                if (statusOwner.typeParameters.isNotEmpty()) {
                     print(" ")
-                    memberDeclaration.typeParameters.renderTypeParameters()
+                    statusOwner.typeParameters.renderTypeParameters()
                 }
             }
         }
@@ -463,7 +466,8 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
     }
 
     override fun visitRegularClass(regularClass: FirRegularClass) {
-        visitMemberDeclaration(regularClass)
+        regularClass.annotations.renderAnnotations()
+        visitStatusOwner(regularClass)
         renderSupertypes(regularClass)
         regularClass.declarations.renderDeclarations()
     }
@@ -640,7 +644,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
 
     override fun visitTypeAlias(typeAlias: FirTypeAlias) {
         typeAlias.annotations.renderAnnotations()
-        visitMemberDeclaration(typeAlias)
+        visitStatusOwner(typeAlias)
         print(" = ")
         typeAlias.expandedTypeRef.accept(this)
         println()

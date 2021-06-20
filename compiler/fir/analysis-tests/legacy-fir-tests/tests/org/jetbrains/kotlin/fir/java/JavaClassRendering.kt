@@ -23,6 +23,7 @@ fun renderJavaClass(renderer: FirRenderer, javaClass: FirJavaClass, session: Fir
 
     val staticScope = javaClass.scopeProvider.getStaticScope(javaClass, session, ScopeSession())
 
+    renderer.renderAnnotations(javaClass)
     renderer.visitMemberDeclaration(javaClass)
     renderer.renderSupertypes(javaClass)
     renderer.renderInBraces {
