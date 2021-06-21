@@ -10,16 +10,17 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.idea.util.getElementTextInContext
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.KtDeclaration
 
-internal fun KtFirSymbol<FirStatusOwner>.getModality(
+internal fun <T> KtFirSymbol<T>.getModality(
     phase: FirResolvePhase = FirResolvePhase.STATUS,
     defaultModality: Modality? = null
-) =
+): Modality where T : FirDeclaration<*>, T : FirStatusOwner =
     firRef.withFir(phase) { fir ->
         fir.modality
             ?: defaultModality
@@ -38,7 +39,9 @@ private fun FirDeclaration<*>.invalidModalityError(): Nothing {
 }
 
 
-internal fun <F : FirStatusOwner<F>> KtFirSymbol<F>.getVisibility(phase: FirResolvePhase = FirResolvePhase.STATUS): Visibility =
+internal fun <F> KtFirSymbol<F>.getVisibility(
+    phase: FirResolvePhase = FirResolvePhase.STATUS
+): Visibility where F : FirStatusOwner, F : FirDeclaration<F> =
     firRef.withFir(phase) { fir -> fir.visibility }
 
 internal fun KtFirSymbol<FirCallableDeclaration<*>>.getCallableIdIfNonLocal(): CallableId? =
