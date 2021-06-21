@@ -481,37 +481,37 @@ internal class CyclicInheritanceHierarchyImpl(
 
 internal class ExpandedTypeCannotBeInheritedImpl(
     override val type: KtType,
-    firDiagnostic: FirPsiDiagnostic<*>,
+    firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.ExpandedTypeCannotBeInherited(), KtAbstractFirDiagnostic<KtTypeReference> {
-    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
 internal class ProjectionInImmediateArgumentToSupertypeImpl(
-    firDiagnostic: FirPsiDiagnostic<*>,
+    firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.ProjectionInImmediateArgumentToSupertype(), KtAbstractFirDiagnostic<KtModifierListOwner> {
-    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
 internal class InconsistentTypeParameterValuesImpl(
     override val typeParameter: KtTypeParameterSymbol,
     override val type: KtClassLikeSymbol,
     override val bounds: List<KtType>,
-    firDiagnostic: FirPsiDiagnostic<*>,
+    firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.InconsistentTypeParameterValues(), KtAbstractFirDiagnostic<KtClass> {
-    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
 internal class InconsistentTypeParameterBoundsImpl(
     override val typeParameter: KtTypeParameterSymbol,
     override val type: KtClassLikeSymbol,
     override val bounds: List<KtType>,
-    firDiagnostic: FirPsiDiagnostic<*>,
+    firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.InconsistentTypeParameterBounds(), KtAbstractFirDiagnostic<PsiElement> {
-    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
 internal class ConstructorInObjectImpl(
@@ -2868,10 +2868,10 @@ internal class RecursiveTypealiasExpansionImpl(
 
 internal class TypealiasShouldExpandToClassImpl(
     override val expandedType: KtType,
-    firDiagnostic: FirPsiDiagnostic<*>,
+    firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
-) : KtFirDiagnostic.TypealiasShouldExpandToClass(), KtAbstractFirDiagnostic<KtTypeAlias> {
-    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+) : KtFirDiagnostic.TypealiasShouldExpandToClass(), KtAbstractFirDiagnostic<KtElement> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
 internal class RedundantVisibilityModifierImpl(

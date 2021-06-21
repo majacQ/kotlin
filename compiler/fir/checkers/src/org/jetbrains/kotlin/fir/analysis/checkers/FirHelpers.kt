@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.SessionHolder
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.isBuiltinFunctionalType
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.firClassLike
@@ -618,3 +619,102 @@ fun extractTypeRefAndSourceFromTypeArgument(typeRef: FirTypeRef?, index: Int): P
 
     return null
 }
+
+fun checkInconsistentTypeParameters(
+    firTypeRefClasses: List<Pair<FirTypeRef?, FirRegularClass>>,
+    context: CheckerContext,
+    reporter: DiagnosticReporter,
+    source: FirSourceElement?,
+    isValues: Boolean
+) {
+    val result = buildDeepSubstitutionMultimap(firTypeRefClasses, context.session)
+    for ((typeParameterSymbol, typeAndProjections) in result) {
+        val projections = typeAndProjections.projections
+        if (projections.size > 1) {
+            if (isValues) {
+                reporter.reportOn(
+                    source,
+                    FirErrors.INCONSISTENT_TYPE_PARAMETER_VALUES,
+                    typeParameterSymbol,
+                    typeAndProjections.classSymbol,
+                    projections,
+                    context
+                )
+            } else {
+                reporter.reportOn(
+                    source,
+                    FirErrors.INCONSISTENT_TYPE_PARAMETER_BOUNDS,
+                    typeParameterSymbol,
+                    typeAndProjections.classSymbol,
+                    projections,
+                    context
+                )
+            }
+        }
+    }
+}
+
+private fun buildDeepSubstitutionMultimap(
+    firTypeRefClasses: List<Pair<FirTypeRef?, FirRegularClass>>,
+    session: FirSession
+): Map<FirTypeParameterSymbol, ClassSymbolAndProjections> {
+    val result = mutableMapOf<FirTypeParameterSymbol, ClassSymbolAndProjections>()
+    val substitution = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
+    val substitutor = ConeSubstitutorByMap(substitution, session)
+    val typeContext = session.typeContext
+
+    fun fillInDeepSubstitutor(firTypeRef: FirTypeRef?, firClass: FirRegularClass) {
+        if (firTypeRef?.isEnum == true) {
+            return
+        }
+
+        if (firTypeRef is FirResolvedTypeRef) {
+            val typeArguments = firTypeRef.type.typeArguments
+            val typeParameters = firClass.typeParameters
+            val count = minOf(typeArguments.size, typeParameters.size)
+
+            for (index in 0 until count) {
+                val typeArgument = typeArguments[index]
+
+                val substitute = substitutor.substituteArgument(typeArgument) ?: typeArgument
+                val substituteType = (substitute as? ConeKotlinTypeProjection)?.type ?: continue
+
+                val typeParameterSymbol = typeParameters[index].symbol
+
+                substitution[typeParameterSymbol] = substituteType
+                var classSymbolAndProjections = result[typeParameterSymbol]
+                val projections: MutableList<ConeKotlinType>
+                if (classSymbolAndProjections == null) {
+                    projections = mutableListOf()
+                    classSymbolAndProjections = ClassSymbolAndProjections(firClass.symbol, projections)
+                    result[typeParameterSymbol] = classSymbolAndProjections
+                } else {
+                    projections = classSymbolAndProjections.projections
+                }
+
+                if (projections.all {
+                        it != substituteType && !AbstractTypeChecker.equalTypes(typeContext, it, substituteType)
+                    }) {
+                    projections.add(substituteType)
+                }
+            }
+        }
+
+        for (superTypeRef in firClass.superTypeRefs) {
+            val superTypeClass = superTypeRef.toRegularClass(session)
+            if (superTypeClass != null) {
+                fillInDeepSubstitutor(superTypeRef, superTypeClass)
+            }
+        }
+    }
+
+    for (firTypeRefClass in firTypeRefClasses) {
+        fillInDeepSubstitutor(firTypeRefClass.first, firTypeRefClass.second)
+    }
+    return result
+}
+
+private data class ClassSymbolAndProjections(
+    val classSymbol: FirRegularClassSymbol,
+    val projections: MutableList<ConeKotlinType>
+)

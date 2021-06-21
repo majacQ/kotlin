@@ -1773,7 +1773,7 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = RecursiveTypealiasExpansion::class
     }
 
-    abstract class TypealiasShouldExpandToClass : KtFirDiagnostic<KtTypeAlias>() {
+    abstract class TypealiasShouldExpandToClass : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = TypealiasShouldExpandToClass::class
         abstract val expandedType: KtType
     }
