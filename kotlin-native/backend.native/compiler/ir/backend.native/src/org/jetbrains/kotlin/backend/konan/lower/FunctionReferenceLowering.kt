@@ -37,7 +37,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-internal class FunctionReferenceLowering(val context: Context): FileLoweringPass {
+internal class FunctionReferenceLowering(val context: Context) : FileLoweringPass {
 
     private object DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL : IrDeclarationOriginImpl("FUNCTION_REFERENCE_IMPL")
 
@@ -48,7 +48,7 @@ internal class FunctionReferenceLowering(val context: Context): FileLoweringPass
 
     override fun lower(irFile: IrFile) {
         var generatedClasses = mutableListOf<IrClass>()
-        irFile.transform(object: IrElementTransformerVoidWithContext() {
+        irFile.transform(object : IrElementTransformerVoidWithContext() {
 
             private val stack = mutableListOf<IrElement>()
 
@@ -200,28 +200,28 @@ internal class FunctionReferenceLowering(val context: Context): FileLoweringPass
         private val functionReferenceTarget = adaptedReferenceOriginalTarget ?: referencedFunction
 
         private val functionReferenceClass: IrClass =
-            IrClassImpl(
-                    startOffset,endOffset,
-                    DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL,
-                    IrClassSymbolImpl(),
-                    "${functionReferenceTarget.name}\$FUNCTION_REFERENCE\$${context.functionReferenceCount++}".synthesizedName,
-                    ClassKind.CLASS,
-                    DescriptorVisibilities.PRIVATE,
-                    Modality.FINAL,
-                    isCompanion = false,
-                    isInner = false,
-                    isData = false,
-                    isExternal = false,
-                    isInline = false,
-                    isExpect = false,
-                    isFun = false
-            ).apply {
-                parent = this@FunctionReferenceBuilder.parent
-                createParameterDeclarations()
+                IrClassImpl(
+                        startOffset, endOffset,
+                        DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL,
+                        IrClassSymbolImpl(),
+                        "${functionReferenceTarget.name}\$FUNCTION_REFERENCE\$${context.functionReferenceCount++}".synthesizedName,
+                        ClassKind.CLASS,
+                        DescriptorVisibilities.PRIVATE,
+                        Modality.FINAL,
+                        isCompanion = false,
+                        isInner = false,
+                        isData = false,
+                        isExternal = false,
+                        isInline = false,
+                        isExpect = false,
+                        isFun = false
+                ).apply {
+                    parent = this@FunctionReferenceBuilder.parent
+                    createParameterDeclarations()
 
-                // copy the generated name for IrClass, partially solves KT-47194
-                context.copyLocalClassName(functionReference, this)
-            }
+                    // copy the generated name for IrClass, partially solves KT-47194
+                    context.copyLocalClassName(functionReference, this)
+                }
 
         private val functionReferenceThis = functionReferenceClass.thisReceiver!!
 
@@ -300,54 +300,54 @@ internal class FunctionReferenceLowering(val context: Context): FileLoweringPass
         }
 
         private fun buildConstructor(): IrConstructor =
-            IrConstructorImpl(
-                    startOffset, endOffset,
-                    DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL,
-                    IrConstructorSymbolImpl(),
-                    Name.special("<init>"),
-                    DescriptorVisibilities.PUBLIC,
-                    functionReferenceClass.defaultType,
-                    isInline = false,
-                    isExternal = false,
-                    isPrimary = true,
-                    isExpect = false
-            ).apply {
-                parent = functionReferenceClass
-                functionReferenceClass.declarations += this
+                IrConstructorImpl(
+                        startOffset, endOffset,
+                        DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL,
+                        IrConstructorSymbolImpl(),
+                        Name.special("<init>"),
+                        DescriptorVisibilities.PUBLIC,
+                        functionReferenceClass.defaultType,
+                        isInline = false,
+                        isExternal = false,
+                        isPrimary = true,
+                        isExpect = false
+                ).apply {
+                    parent = functionReferenceClass
+                    functionReferenceClass.declarations += this
 
-                valueParameters += boundFunctionParameters.mapIndexed { index, parameter ->
-                    parameter.copyTo(this, DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL, index,
-                            type = parameter.type.substitute(typeArgumentsMap))
-                }
+                    valueParameters += boundFunctionParameters.mapIndexed { index, parameter ->
+                        parameter.copyTo(this, DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL, index,
+                                type = parameter.type.substitute(typeArgumentsMap))
+                    }
 
-                val kTypeGenerator = KTypeGenerator(context, irFile, functionReference)
-                body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
-                    val superConstructor = when {
-                        isKSuspendFunction -> kSuspendFunctionImplConstructorSymbol.owner
-                        isLambda -> irBuiltIns.anyClass.owner.constructors.single()
-                        else -> kFunctionImplConstructorSymbol.owner
-                    }
-                    +irDelegatingConstructorCall(superConstructor).apply applyIrDelegationConstructorCall@ {
-                        if (isLambda) return@applyIrDelegationConstructorCall
-                        val name = ((functionReferenceTarget as? IrSimpleFunction)?.attributeOwnerId as? IrSimpleFunction)?.name
-                                ?: functionReferenceTarget.name
-                        val needReceiver = boundFunctionParameters.singleOrNull()?.descriptor is ReceiverParameterDescriptor
-                        val receiver = if (needReceiver) irGet(valueParameters.single()) else irNull()
-                        val arity = unboundFunctionParameters.size + if (functionReferenceTarget.isSuspend) 1 else 0
-                        putValueArgument(0, irString(name.asString()))
-                        putValueArgument(1, irString(functionReferenceTarget.computeFullName()))
-                        putValueArgument(2, receiver)
-                        putValueArgument(3, irInt(arity))
-                        putValueArgument(4, irInt(getFlags()))
-                        putValueArgument(5, with(kTypeGenerator) { irKType(referencedFunction.returnType) })
-                    }
-                    +IrInstanceInitializerCallImpl(startOffset, endOffset, functionReferenceClass.symbol, irBuiltIns.unitType)
-                    // Save all arguments to fields.
-                    boundFunctionParameters.forEachIndexed { index, parameter ->
-                        +irSetField(irGet(functionReferenceThis), argumentToPropertiesMap[parameter]!!, irGet(valueParameters[index]))
+                    val kTypeGenerator = KTypeGenerator(context, irFile, functionReference)
+                    body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
+                        val superConstructor = when {
+                            isKSuspendFunction -> kSuspendFunctionImplConstructorSymbol.owner
+                            isLambda -> irBuiltIns.anyClass.owner.constructors.single()
+                            else -> kFunctionImplConstructorSymbol.owner
+                        }
+                        +irDelegatingConstructorCall(superConstructor).apply applyIrDelegationConstructorCall@{
+                            if (isLambda) return@applyIrDelegationConstructorCall
+                            val name = ((functionReferenceTarget as? IrSimpleFunction)?.attributeOwnerId as? IrSimpleFunction)?.name
+                                    ?: functionReferenceTarget.name
+                            val needReceiver = boundFunctionParameters.singleOrNull()?.descriptor is ReceiverParameterDescriptor
+                            val receiver = if (needReceiver) irGet(valueParameters.single()) else irNull()
+                            val arity = unboundFunctionParameters.size + if (functionReferenceTarget.isSuspend) 1 else 0
+                            putValueArgument(0, irString(name.asString()))
+                            putValueArgument(1, irString(functionReferenceTarget.computeFullName()))
+                            putValueArgument(2, receiver)
+                            putValueArgument(3, irInt(arity))
+                            putValueArgument(4, irInt(getFlags()))
+                            putValueArgument(5, with(kTypeGenerator) { irKType(referencedFunction.returnType) })
+                        }
+                        +IrInstanceInitializerCallImpl(startOffset, endOffset, functionReferenceClass.symbol, irBuiltIns.unitType)
+                        // Save all arguments to fields.
+                        boundFunctionParameters.forEachIndexed { index, parameter ->
+                            +irSetField(irGet(functionReferenceThis), argumentToPropertiesMap[parameter]!!, irGet(valueParameters[index]))
+                        }
                     }
                 }
-            }
 
         private fun getFlags() =
                 (if (referencedFunction.isSuspend) 1 else 0) + getAdaptedCallableReferenceFlags() shl 1
@@ -387,71 +387,71 @@ internal class FunctionReferenceLowering(val context: Context): FileLoweringPass
         }
 
         private fun buildInvokeMethod(superFunction: IrSimpleFunction): IrSimpleFunction =
-            IrFunctionImpl(
-                    startOffset, endOffset,
-                    DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL,
-                    IrSimpleFunctionSymbolImpl(),
-                    superFunction.name,
-                    DescriptorVisibilities.PRIVATE,
-                    Modality.FINAL,
-                    referencedFunction.returnType,
-                    isInline = false,
-                    isExternal = false,
-                    isTailrec = false,
-                    isSuspend = superFunction.isSuspend,
-                    isExpect = false,
-                    isFakeOverride = false,
-                    isOperator = false,
-                    isInfix = false
-            ).apply {
-                val function = this
-                parent = functionReferenceClass
-                functionReferenceClass.declarations += function
+                IrFunctionImpl(
+                        startOffset, endOffset,
+                        DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL,
+                        IrSimpleFunctionSymbolImpl(),
+                        superFunction.name,
+                        DescriptorVisibilities.PRIVATE,
+                        Modality.FINAL,
+                        referencedFunction.returnType,
+                        isInline = false,
+                        isExternal = false,
+                        isTailrec = false,
+                        isSuspend = superFunction.isSuspend,
+                        isExpect = false,
+                        isFakeOverride = false,
+                        isOperator = false,
+                        isInfix = false
+                ).apply {
+                    val function = this
+                    parent = functionReferenceClass
+                    functionReferenceClass.declarations += function
 
-                this.createDispatchReceiverParameter()
+                    this.createDispatchReceiverParameter()
 
-                extensionReceiverParameter = superFunction.extensionReceiverParameter?.copyTo(function)
+                    extensionReceiverParameter = superFunction.extensionReceiverParameter?.copyTo(function)
 
-                valueParameters += superFunction.valueParameters.mapIndexed { index, parameter ->
-                    parameter.copyTo(function, DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL, index,
-                            type = parameter.type.substitute(typeArgumentsMap))
-                }
+                    valueParameters += superFunction.valueParameters.mapIndexed { index, parameter ->
+                        parameter.copyTo(function, DECLARATION_ORIGIN_FUNCTION_REFERENCE_IMPL, index,
+                                type = parameter.type.substitute(typeArgumentsMap))
+                    }
 
-                overriddenSymbols += superFunction.symbol
+                    overriddenSymbols += superFunction.symbol
 
-                body = context.createIrBuilder(function.symbol, startOffset, endOffset).irBlockBody(startOffset, endOffset) {
-                    +irReturn(
-                            irCall(functionReference.symbol).apply {
-                                var unboundIndex = 0
-                                val unboundArgsSet = unboundFunctionParameters.toSet()
-                                for (parameter in functionParameters) {
-                                    val argument =
-                                            if (!unboundArgsSet.contains(parameter))
-                                            // Bound parameter - read from field.
-                                                irGetField(
-                                                        irGet(function.dispatchReceiverParameter!!),
-                                                        argumentToPropertiesMap[parameter]!!
-                                                )
-                                            else {
-                                                if (parameter == referencedFunction.extensionReceiverParameter
-                                                        && extensionReceiverParameter != null)
-                                                    irGet(extensionReceiverParameter!!)
-                                                else if (function.isSuspend && unboundIndex == valueParameters.size)
-                                                // For suspend functions the last argument is continuation and it is implicit.
-                                                    irCall(getContinuationSymbol.owner, listOf(returnType))
-                                                else
-                                                    irGet(valueParameters[unboundIndex++])
-                                            }
-                                    when (parameter) {
-                                        referencedFunction.dispatchReceiverParameter -> dispatchReceiver = argument
-                                        referencedFunction.extensionReceiverParameter -> extensionReceiver = argument
-                                        else -> putValueArgument(parameter.index, argument)
+                    body = context.createIrBuilder(function.symbol, startOffset, endOffset).irBlockBody(startOffset, endOffset) {
+                        +irReturn(
+                                irCall(functionReference.symbol).apply {
+                                    var unboundIndex = 0
+                                    val unboundArgsSet = unboundFunctionParameters.toSet()
+                                    for (parameter in functionParameters) {
+                                        val argument =
+                                                if (!unboundArgsSet.contains(parameter))
+                                                // Bound parameter - read from field.
+                                                    irGetField(
+                                                            irGet(function.dispatchReceiverParameter!!),
+                                                            argumentToPropertiesMap[parameter]!!
+                                                    )
+                                                else {
+                                                    if (parameter == referencedFunction.extensionReceiverParameter
+                                                            && extensionReceiverParameter != null)
+                                                        irGet(extensionReceiverParameter!!)
+                                                    else if (function.isSuspend && unboundIndex == valueParameters.size)
+                                                    // For suspend functions the last argument is continuation and it is implicit.
+                                                        irCall(getContinuationSymbol.owner, listOf(returnType))
+                                                    else
+                                                        irGet(valueParameters[unboundIndex++])
+                                                }
+                                        when (parameter) {
+                                            referencedFunction.dispatchReceiverParameter -> dispatchReceiver = argument
+                                            referencedFunction.extensionReceiverParameter -> extensionReceiver = argument
+                                            else -> putValueArgument(parameter.index, argument)
+                                        }
                                     }
+                                    assert(unboundIndex == valueParameters.size) { "Not all arguments of <invoke> are used" }
                                 }
-                                assert(unboundIndex == valueParameters.size) { "Not all arguments of <invoke> are used" }
-                            }
-                    )
+                        )
+                    }
                 }
-            }
     }
 }
