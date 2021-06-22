@@ -22,9 +22,12 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirSupertypesChecker : FirClassChecker() {
+    private val enumId: ClassId = ClassId.fromString("kotlin/Enum")
+
     override fun check(declaration: FirClass<*>, context: CheckerContext, reporter: DiagnosticReporter) {
         val isInterface = declaration.classKind == ClassKind.INTERFACE
         var nullableSupertypeReported = false
@@ -84,6 +87,12 @@ object FirSupertypesChecker : FirClassChecker() {
             }
 
             val coneType = superTypeRef.coneType
+            val fullyExpandedType = coneType.fullyExpandedType(context.session)
+            val symbol = fullyExpandedType.toSymbol(context.session)
+            if (symbol is FirRegularClassSymbol && symbol.classId == enumId) {
+                reporter.reportOn(superTypeRef.source, FirErrors.CLASS_CANNOT_BE_EXTENDED_DIRECTLY, symbol, context)
+            }
+
             if (coneType.typeArguments.isNotEmpty()) {
                 for ((index, typeArgument) in coneType.typeArguments.withIndex()) {
                     if (typeArgument.isConflictingOrNotInvariant) {
@@ -96,8 +105,7 @@ object FirSupertypesChecker : FirClassChecker() {
                     }
                 }
             } else {
-                val fullyExpandedType = coneType.fullyExpandedType(context.session)
-                if (isInterface(fullyExpandedType, context.session)) {
+                if (symbol is FirRegularClassSymbol && symbol.fir.classKind == ClassKind.INTERFACE) {
                     for (typeArgument in fullyExpandedType.typeArguments) {
                         if (typeArgument.isConflictingOrNotInvariant) {
                             reporter.reportOn(superTypeRef.source, FirErrors.EXPANDED_TYPE_CANNOT_BE_INHERITED, coneType, context)
@@ -111,10 +119,5 @@ object FirSupertypesChecker : FirClassChecker() {
         if (declaration is FirRegularClass && declaration.superTypeRefs.size > 1) {
             checkInconsistentTypeParameters(listOf(Pair(null, declaration)), context, reporter, declaration.source, true)
         }
-    }
-
-    private fun isInterface(type: ConeKotlinType, session: FirSession): Boolean {
-        val symbol = type.toSymbol(session)
-        return symbol is FirRegularClassSymbol && symbol.fir.classKind == ClassKind.INTERFACE
     }
 }

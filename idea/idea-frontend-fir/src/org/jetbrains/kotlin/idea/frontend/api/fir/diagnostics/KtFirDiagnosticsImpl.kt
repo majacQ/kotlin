@@ -408,6 +408,13 @@ internal class FinalSupertypeImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class ClassCannotBeExtendedDirectlyImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ClassCannotBeExtendedDirectly(), KtAbstractFirDiagnostic<KtTypeReference> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class SupertypeIsExtensionFunctionTypeImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,

@@ -266,6 +266,10 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = FinalSupertype::class
     }
 
+    abstract class ClassCannotBeExtendedDirectly : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = ClassCannotBeExtendedDirectly::class
+    }
+
     abstract class SupertypeIsExtensionFunctionType : KtFirDiagnostic<KtTypeReference>() {
         override val diagnosticClass get() = SupertypeIsExtensionFunctionType::class
     }
