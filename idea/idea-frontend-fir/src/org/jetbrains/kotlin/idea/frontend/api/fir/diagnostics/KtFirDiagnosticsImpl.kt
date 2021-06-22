@@ -161,6 +161,13 @@ internal class DelegationInInterfaceImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class DelegationNotToInterfaceImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.DelegationNotToInterface(), KtAbstractFirDiagnostic<PsiElement> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class NestedClassNotAllowedImpl(
     override val declaration: String,
     firDiagnostic: FirPsiDiagnostic,
@@ -409,6 +416,7 @@ internal class FinalSupertypeImpl(
 }
 
 internal class ClassCannotBeExtendedDirectlyImpl(
+    override val class: KtClassLikeSymbol,
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.ClassCannotBeExtendedDirectly(), KtAbstractFirDiagnostic<KtTypeReference> {
