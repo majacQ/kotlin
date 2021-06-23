@@ -1407,7 +1407,7 @@ class CocoaPodsIT : BaseGradleIT() {
         fun installPodGen() {
             if (cocoapodsInstallationRequired) {
                 if (cocoapodsInstallationAllowed) {
-                    WorkaroundForXcode12_3.apply()
+//                    WorkaroundForXcode12_3.apply()
                     gem("install", "--install-dir", cocoapodsInstallationRoot.absolutePath, "cocoapods", "cocoapods-generate")
                 } else {
                     fail(
@@ -1425,9 +1425,9 @@ class CocoaPodsIT : BaseGradleIT() {
         @AfterClass
         @JvmStatic
         fun disposeWorkarounds() {
-            if (cocoapodsInstallationRequired && cocoapodsInstallationAllowed) {
-                WorkaroundForXcode12_3.dispose()
-            }
+//            if (cocoapodsInstallationRequired && cocoapodsInstallationAllowed) {
+//                WorkaroundForXcode12_3.dispose()
+//            }
         }
 
         private val cocoapodsInstallationRequired: Boolean by lazy {
